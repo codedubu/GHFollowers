@@ -62,6 +62,7 @@ class GFAlertVC: UIViewController {
     
     func configureTitleLabel() {
         containerView.addSubview(titleLabel)
+        
         titleLabel.text = alertTitle ?? "Something went wrong."
         
         NSLayoutConstraint.activate([
