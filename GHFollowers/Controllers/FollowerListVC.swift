@@ -50,8 +50,10 @@ class FollowerListVC: UIViewController {
     
     
     func getFollowers(username: String, page: Int) {
+        showLoadingView()
         NetworkManager.shared.getFollowers(for: username, page: page) { [weak self] result in
             guard let self = self else { return }
+            self.dissmissLoadingView()
             
             switch result {
             case .success(let followers):
@@ -82,6 +84,7 @@ class FollowerListVC: UIViewController {
         
         DispatchQueue.main.async { self.dataSource.apply(snapshot, animatingDifferences: true) }
     }
+    
 } // END OF CLASS
 
 // MARK: - Extensions
@@ -99,8 +102,10 @@ extension FollowerListVC: UICollectionViewDelegate {
         }
     }
     
-    //        print("OffsetY = \(offsetY)")
-    //        print("Content Height = \(contentHeight)")
-    //        print("Height of Screen = \(height)")
-    
 } // END OF EXTENSION
+
+
+/// `Print statements to see where the scrollview ends`
+//        print("OffsetY = \(offsetY)")
+//        print("Content Height = \(contentHeight)")
+//        print("Height of Screen = \(height)")
