@@ -13,8 +13,10 @@ class FollowerListVC: UIViewController {
     
     var username: String!
     var followers: [Follower] = []
+    var filteredFollowers: [Follower] = []
     var page = 1
     var hasMoreFollowers = true
+    var isSearching = false
     
     var collectionView: UICollectionView!
     // Has to know about our sections and has to know about our data model/object.
@@ -23,6 +25,7 @@ class FollowerListVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         configureCollectionView()
+        configureSearchController()
         configureViewController()
         getFollowers(username: username, page: page)
         configureDataSource()
@@ -48,6 +51,16 @@ class FollowerListVC: UIViewController {
         collectionView.register(FollowerCell.self, forCellWithReuseIdentifier: FollowerCell.reuseID)
     }
     
+    func configureSearchController() {
+        let searchController                                    = UISearchController()
+        searchController.searchResultsUpdater                   = self
+        searchController.searchBar.placeholder                  = "Search by username..."
+        searchController.obscuresBackgroundDuringPresentation   = false
+        searchController.searchBar.delegate                     = self
+        navigationItem.searchController                         = searchController
+        navigationItem.hidesSearchBarWhenScrolling              = false
+    }
+    
     
     func getFollowers(username: String, page: Int) {
         showLoadingView()
@@ -65,7 +78,7 @@ class FollowerListVC: UIViewController {
                     DispatchQueue.main.async { self.showEmptyStateView(with: message, in: self.view) }
                     return
                 }
-                self.updateData()
+                self.updateData(on: self.followers)
                 
             case .failure(let error):
                 self.presentGFAlertOnMainThread(title: "There was an error yo", message: error.rawValue, buttonTitle: "Ok")
@@ -83,7 +96,7 @@ class FollowerListVC: UIViewController {
     }
     
     
-    func updateData() {
+    func updateData(on followers: [Follower]) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, Follower>()
         snapshot.appendSections([.main])
         snapshot.appendItems(followers)
@@ -108,7 +121,36 @@ extension FollowerListVC: UICollectionViewDelegate {
         }
     }
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let activeArray           = isSearching ? filteredFollowers : followers
+        let follower              = activeArray[indexPath.item]
+        
+        let destinationVC         = UserInfoVC()
+        destinationVC.username    = follower.login
+        print("\(follower.login)")
+        let navController         = UINavigationController(rootViewController: destinationVC)
+        present(navController, animated: true)
+    }
+    
 } // END OF EXTENSION
+
+extension FollowerListVC: UISearchResultsUpdating, UISearchBarDelegate {
+    func updateSearchResults(for searchController: UISearchController) {
+        guard let filter = searchController.searchBar.text, !filter.isEmpty else { return }
+        isSearching = true
+        filteredFollowers = followers.filter { $0.login.lowercased().contains(filter.lowercased()) }
+        updateData(on: filteredFollowers)
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        isSearching = false
+        updateData(on: followers)
+    }
+    
+    
+} // END OF EXTENSION
+
+
 
 
 /// `Print statements to see where the scrollview ends`
