@@ -7,6 +7,10 @@
 
 import UIKit
 
+protocol FollowerListVCDelegate: AnyObject {
+    func didRequestFollowers(for username: String)
+}
+
 class FollowerListVC: UIViewController {
     
     enum Section { case main }
@@ -21,6 +25,7 @@ class FollowerListVC: UIViewController {
     var collectionView: UICollectionView!
     // Has to know about our sections and has to know about our data model/object.
     var dataSource: UICollectionViewDiffableDataSource<Section, Follower>!
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -127,14 +132,16 @@ extension FollowerListVC: UICollectionViewDelegate {
         
         let destinationVC         = UserInfoVC()
         destinationVC.username    = follower.login
-        print("\(follower.login)")
+        destinationVC.delegate    = self
         let navController         = UINavigationController(rootViewController: destinationVC)
         present(navController, animated: true)
     }
     
 } // END OF EXTENSION
 
+
 extension FollowerListVC: UISearchResultsUpdating, UISearchBarDelegate {
+    
     func updateSearchResults(for searchController: UISearchController) {
         guard let filter = searchController.searchBar.text, !filter.isEmpty else { return }
         isSearching = true
@@ -151,7 +158,18 @@ extension FollowerListVC: UISearchResultsUpdating, UISearchBarDelegate {
 } // END OF EXTENSION
 
 
-
+extension FollowerListVC: FollowerListVCDelegate {
+    
+    func didRequestFollowers(for username: String) {
+        self.username   = username
+        title           = username
+        page            = 1
+        followers.removeAll()
+        filteredFollowers.removeAll()
+        collectionView.scrollsToTop = true
+        getFollowers(username: username, page: page)
+    }
+}
 
 /// `Print statements to see where the scrollview ends`
 //        print("OffsetY = \(offsetY)")
